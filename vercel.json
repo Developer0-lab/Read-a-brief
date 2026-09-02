@@ -1,5 +1,10 @@
 {
   "outputDirectory": ".next",
+  "alias": [
+    "read-a-brief.vercel.app",
+    "read-a-brief-muddualdrine0-4301s-projects.vercel.app",
+    "read-a-brief-git-main-muddualdrine0-4301s-projects.vercel.app"
+  ],
   "crons": [
     {
       "path": "/api/automation/ingest",
