@@ -13,8 +13,8 @@ function tag(xml: string, name: string): string | null {
 }
 
 function items(xml: string): string[] {
-  const rss = [...xml.matchAll(/<item(?:\\s[^>]*)?>([\\s\\S]*?)<\\/item>/gi)].map((m) => m[1]);
-  const atom = [...xml.matchAll(/<entry(?:\\s[^>]*)?>([\\s\\S]*?)<\\/entry>/gi)].map((m) => m[1]);
+  const rss = [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map((m) => m[1]);
+  const atom = [...xml.matchAll(/<entry(?:\s[^>]*)?>([\s\S]*?)<\/entry>/gi)].map((m) => m[1]);
   return [...rss, ...atom];
 }
 
