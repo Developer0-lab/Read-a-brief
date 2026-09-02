@@ -1,3 +1,5 @@
+export type SourceType = 'rss' | 'atom' | 'api' | 'website'
+
 export type FeedSource = {
   id: string
   name: string
@@ -5,7 +7,8 @@ export type FeedSource = {
   homepageUrl?: string | null
   category?: string | null
   country?: string | null
-  sourceType: 'rss' | 'atom' | 'api' | 'website'
+  sourceType: SourceType
+  enabled?: boolean
 }
 
 export type DiscoveredStory = {
