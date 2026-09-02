@@ -1,0 +1,6 @@
+'use client'
+
+import { FormEvent, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function ResetPasswordPage(){const supabase=createClient();const[p,setP]=useState('');const[confirm,setConfirm]=useState('');const[message,setMessage]=useState('');const[error,setError]=useState('');const[busy,setBusy]=useState(false);async function submit(e:FormEvent){e.preventDefault();if(p.length<8||p!==confirm){setError('Passwords must match and be at least 8 characters.');return}setBusy(true);setError('');const{error}=await supabase.auth.updateUser({password:p});if(error)setError(error.message);else setMessage('Password updated. You can now sign in.');setBusy(false)}return <main className="auth-shell"><form className="auth-card" onSubmit={submit}><div className="eyebrow">SECURE RESET</div><h1>Choose a new password</h1><label>New password<input type="password" required minLength={8} value={p} onChange={e=>setP(e.target.value)}/></label><label>Confirm password<input type="password" required minLength={8} value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>{error&&<div className="auth-error">{error}</div>}{message&&<div className="auth-success">{message}</div>}<button disabled={busy}>{busy?'Updating…':'Update password'}</button></form></main>}
