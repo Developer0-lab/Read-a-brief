@@ -1,0 +1,1 @@
+Deployment trigger for the current Vercel configuration. This file can be removed after the deployment is verified.
