@@ -1,36 +1,20 @@
-import Link from 'next/link'
+'use client'
 
-export default function SourcesPage() {
-  return (
-    <main style={{maxWidth: 1100, margin: '0 auto', padding: 32, fontFamily: 'system-ui'}}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:16}}>
-        <div>
-          <Link href="/admin">← Admin</Link>
-          <h1 style={{fontSize: 36, marginBottom: 8}}>Sources Manager</h1>
-          <p style={{color:'#666'}}>Manage RSS, Atom and API sources used by Read-a-Brief automation.</p>
-        </div>
-      </div>
-      <section style={{marginTop:28, padding:24, border:'1px solid #ddd', borderRadius:16}}>
-        <h2>Add a source</h2>
-        <p style={{color:'#666'}}>The dashboard UI is ready to be connected to Supabase source records and the feed test endpoint.</p>
-        <div style={{display:'grid', gap:12, maxWidth:650}}>
-          <input aria-label="Source name" placeholder="Source name" style={{padding:12, border:'1px solid #ccc', borderRadius:8}} />
-          <input aria-label="Homepage URL" placeholder="Homepage URL" style={{padding:12, border:'1px solid #ccc', borderRadius:8}} />
-          <input aria-label="Feed URL" placeholder="RSS or Atom feed URL" style={{padding:12, border:'1px solid #ccc', borderRadius:8}} />
-          <div style={{display:'flex', gap:12}}>
-            <select aria-label="Source type" style={{padding:12, border:'1px solid #ccc', borderRadius:8}} defaultValue="rss">
-              <option value="rss">RSS</option><option value="atom">Atom</option><option value="api">API</option><option value="website">Website</option>
-            </select>
-            <input aria-label="Category" placeholder="Category" style={{padding:12, border:'1px solid #ccc', borderRadius:8, flex:1}} />
-            <input aria-label="Country" placeholder="Country" style={{padding:12, border:'1px solid #ccc', borderRadius:8, flex:1}} />
-          </div>
-          <button type="button" style={{padding:12, border:0, borderRadius:8, cursor:'pointer'}}>Save source</button>
-        </div>
-      </section>
-      <section style={{marginTop:20, padding:24, border:'1px solid #ddd', borderRadius:16}}>
-        <h2>Configured sources</h2>
-        <p style={{color:'#666'}}>No sources are configured yet. Add your first approved feed to start ingestion.</p>
-      </section>
-    </main>
-  )
+import { FormEvent, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+type Source={id:string;name:string;homepage_url:string|null;feed_url:string;source_type:'rss'|'atom'|'api'|'website';category:string|null;country:string|null;enabled:boolean;polling_minutes:number;last_checked_at:string|null;last_success_at:string|null;last_error:string|null}
+
+const blank={name:'',homepage_url:'',feed_url:'',source_type:'rss',category:'',country:'',polling_minutes:15}
+
+export default function SourcesPage(){const supabase=createClient();const[sources,setSources]=useState<Source[]>([]);const[form,setForm]=useState<any>(blank);const[editing,setEditing]=useState<string|null>(null);const[status,setStatus]=useState('');const[testing,setTesting]=useState(false);const[loading,setLoading]=useState(true)
+  async function load(){setLoading(true);const{data,error}=await supabase.from('sources').select('*').order('created_at',{ascending:false});if(error)setStatus(error.message);else setSources((data||[]) as Source[]);setLoading(false)}
+  useEffect(()=>{load()},[])
+  function change(k:string,v:any){setForm((x:any)=>({...x,[k]:v}))}
+  async function save(e:FormEvent){e.preventDefault();setStatus('');const payload={...form,polling_minutes:Number(form.polling_minutes)||15,homepage_url:form.homepage_url||null,category:form.category||null,country:form.country||null};const result=editing?await supabase.from('sources').update(payload).eq('id',editing):await supabase.from('sources').insert(payload);if(result.error)setStatus(result.error.message);else{setStatus(editing?'Source updated.':'Source added.');setForm({...blank});setEditing(null);await load()}}
+  async function remove(id:string){if(!confirm('Delete this source?'))return;const{error}=await supabase.from('sources').delete().eq('id',id);setStatus(error?.message||'Source deleted.');if(!error)await load()}
+  async function toggle(s:Source){const{error}=await supabase.from('sources').update({enabled:!s.enabled}).eq('id',s.id);if(error)setStatus(error.message);else await load()}
+  async function test(){setTesting(true);setStatus('Testing feed…');try{const r=await fetch('/api/sources/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(form)});const data=await r.json();setStatus(data.ok?`Feed OK — ${data.count} stories found.`:data.error||'Feed test failed.')}catch{setStatus('Feed test failed.')}finally{setTesting(false)}}
+  return <main className="site"><header className="header"><div className="header-inner"><div className="brand">READ-A-BRIEF <span>/ SOURCES</span></div><Link href="/admin">← Operations</Link></div></header><div className="content" style={{marginTop:0,paddingTop:42}}><div className="section-head"><div><div className="eyebrow">SOURCE CONTROL</div><h2>{editing?'Edit source':'Add a source'}</h2></div><span className="muted">{sources.length} configured</span></div><section className="card"><form onSubmit={save} style={{display:'grid',gap:12}}><input required aria-label="Source name" placeholder="Source name" value={form.name} onChange={e=>change('name',e.target.value)}/><input aria-label="Homepage URL" placeholder="Homepage URL" value={form.homepage_url} onChange={e=>change('homepage_url',e.target.value)}/><input required aria-label="Feed URL" placeholder="RSS or Atom feed URL" value={form.feed_url} onChange={e=>change('feed_url',e.target.value)}/><div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}><select aria-label="Source type" value={form.source_type} onChange={e=>change('source_type',e.target.value)}><option value="rss">RSS</option><option value="atom">Atom</option><option value="api">API</option><option value="website">Website</option></select><input placeholder="Category" value={form.category} onChange={e=>change('category',e.target.value)}/><input placeholder="Country" value={form.country} onChange={e=>change('country',e.target.value)}/><input type="number" min="1" max="1440" placeholder="Polling minutes" value={form.polling_minutes} onChange={e=>change('polling_minutes',e.target.value)}/></div><div style={{display:'flex',gap:10}}><button type="submit">{editing?'Update source':'Save source'}</button><button type="button" onClick={test} disabled={testing}>{testing?'Testing…':'Test feed'}</button>{editing&&<button type="button" onClick={()=>{setEditing(null);setForm({...blank})}}>Cancel</button>}</div>{status&&<p className="muted">{status}</p>}</form></section><section style={{marginTop:20}}><div className="section-head"><h2>Configured sources</h2></div>{loading?<p className="muted">Loading…</p>:sources.length===0?<section className="card"><p className="muted">No sources configured yet. Add your first approved feed above.</p></section>:<div style={{display:'grid',gap:12}}>{sources.map(s=><article className="card" key={s.id}><div style={{display:'flex',justifyContent:'space-between',gap:20,alignItems:'start'}}><div><div className="tag">{s.enabled?'ENABLED':'DISABLED'} · {s.source_type.toUpperCase()}</div><h3>{s.name}</h3><p className="muted">{s.feed_url}</p><p className="muted">{s.category||'Uncategorized'} · {s.country||'Global'} · every {s.polling_minutes} min</p>{s.last_error&&<p className="auth-error">Last error: {s.last_error}</p>}{s.last_success_at&&<p className="muted">Last success: {new Date(s.last_success_at).toLocaleString()}</p>}</div><div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'end'}}><button onClick={()=>toggle(s)}>{s.enabled?'Disable':'Enable'}</button><button onClick={()=>{setEditing(s.id);setForm({name:s.name,homepage_url:s.homepage_url||'',feed_url:s.feed_url,source_type:s.source_type,category:s.category||'',country:s.country||'',polling_minutes:s.polling_minutes});window.scrollTo({top:0,behavior:'smooth'})}}>Edit</button><button onClick={()=>remove(s.id)}>Delete</button></div></div></article>)}</div>}</section></div></main>
 }
