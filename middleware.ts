@@ -13,7 +13,6 @@ export async function middleware(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          response = NextResponse.next({ request })
           response.cookies.set(name, value, options)
         })
       },
@@ -31,6 +30,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(login)
   }
 
+  if (user && isAdminPage) {
+    const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
+    const manager = profile && profile.is_active !== false && (profile.role === 'admin' || profile.role === 'editor')
+    if (!manager && pathname !== '/admin/unauthorized') return NextResponse.redirect(new URL('/admin/unauthorized', request.url))
+  }
+
   if (user && isAuthPage && !pathname.startsWith('/auth/callback')) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
@@ -38,6 +43,4 @@ export async function middleware(request: NextRequest) {
   return response
 }
 
-export const config = {
-  matcher: ['/admin/:path*', '/auth/:path*'],
-}
+export const config = { matcher: ['/admin/:path*', '/auth/:path*'] }
