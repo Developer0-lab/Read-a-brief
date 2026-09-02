@@ -1,3 +1,4 @@
+'use client'
+import { useState } from 'react'
 import Link from 'next/link'
-
-export default function UnauthorizedPage(){return <main className="auth-shell"><section className="auth-card"><div className="eyebrow">ACCESS DENIED</div><h1>Manager access required</h1><p className="muted">Your account is signed in, but it does not have the editor or admin role needed for the operations center.</p><Link href="/" className="button-link">Return to public site</Link></section></main>}
+export default function UnauthorizedPage(){const[busy,setBusy]=useState(false);const[error,setError]=useState('');async function claim(){setBusy(true);setError('');const r=await fetch('/api/auth/claim-admin',{method:'POST'});const d=await r.json();if(r.ok)window.location.href='/admin';else setError(d.error||'Unable to claim admin access');setBusy(false)}return <main className="auth-shell"><section className="auth-card"><div className="eyebrow">ACCESS DENIED</div><h1>Manager access required</h1><p className="muted">Your account is signed in, but it does not have the editor or admin role needed for the operations center.</p><button onClick={claim} disabled={busy}>{busy?'Checking…':'Claim initial admin access'}</button>{error&&<div className="auth-error">{error}</div>}<Link href="/" className="muted">Return to public site</Link></section></main>}
