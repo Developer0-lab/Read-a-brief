@@ -1,0 +1,74 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
+type Story = {
+  id: string
+  title: string
+  description: string | null
+  author: string | null
+  canonical_url: string
+  category: string | null
+  country: string | null
+  language: string | null
+  status: string
+  published_at: string | null
+  created_at: string
+  source_id: string
+}
+
+export default function StoryReviewPage() {
+  const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const supabase = createClient()
+  const [story, setStory] = useState<Story | null>(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    async function load() {
+      const { data, error } = await supabase.from('stories').select('*').eq('id', id).single()
+      if (!active) return
+      if (error) setError(error.message)
+      else setStory(data as Story)
+    }
+    if (id) load()
+    return () => { active = false }
+  }, [id, supabase])
+
+  async function setStatus(status: 'approved' | 'rejected' | 'review') {
+    if (!story) return
+    setBusy(true); setError('')
+    const { data, error } = await supabase.from('stories').update({ status }).eq('id', story.id).select('*').single()
+    if (error) setError(error.message)
+    else setStory(data as Story)
+    setBusy(false)
+  }
+
+  if (error) return <main className="site"><div className="content admin-content"><Link href="/admin/inbox">← Story Inbox</Link><section className="empty-state"><h3>Could not load story</h3><p>{error}</p></section></div></main>
+  if (!story) return <main className="site"><div className="content admin-content"><p className="muted">Loading story…</p></div></main>
+
+  return <main className="site">
+    <header className="header"><div className="header-inner"><Link className="brand" href="/admin">READ-A-BRIEF <span>/ REVIEW</span></Link><nav className="nav"><Link href="/admin/inbox">Story Inbox</Link><Link href="/admin/sources">Sources</Link><Link href="/">Public site</Link></nav></div></header>
+    <div className="content admin-content">
+      <Link className="muted" href="/admin/inbox">← Back to Story Inbox</Link>
+      <article className="card" style={{marginTop:20}}>
+        <div className="tag">{story.status.toUpperCase()} · {story.category || 'UNCATEGORIZED'}</div>
+        <h1>{story.title}</h1>
+        <p className="muted">{story.country || 'Global'}{story.author ? ` · ${story.author}` : ''} · {new Date(story.created_at).toLocaleString()}</p>
+        {story.description && <p style={{fontSize:18,lineHeight:1.7}}>{story.description}</p>}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:24}}>
+          <button disabled={busy} onClick={() => setStatus('approved')}>Approve</button>
+          <button disabled={busy} onClick={() => setStatus('review')}>Send to review</button>
+          <button disabled={busy} onClick={() => setStatus('rejected')}>Reject</button>
+          <a className="button-link" href={story.canonical_url} target="_blank" rel="noreferrer">Open original ↗</a>
+        </div>
+        {error && <p className="auth-error" style={{marginTop:14}}>{error}</p>}
+      </article>
+    </div>
+  </main>
+}
