@@ -26,6 +26,7 @@ h1 em { font-style: normal; color: #d1d5db; }
 .search input::placeholder { color:#7f8997; }
 .search button { height:50px; padding:0 22px; }
 .content { max-width: 1180px; margin: -38px auto 0; padding: 0 24px 80px; position: relative; }
+.admin-content { margin-top:0; padding-top:42px; }
 .toolbar { background: white; border: 1px solid #e5e7eb; border-radius: 18px; padding: 18px; display: flex; flex-wrap: wrap; gap: 9px; box-shadow: 0 12px 40px rgba(15,23,42,.09); }
 .chip { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: 9px 14px; color: #374151; font-size: 13px; }
 .chip.active { background: #111827; color: white; border-color: #111827; }
@@ -33,6 +34,7 @@ h1 em { font-style: normal; color: #d1d5db; }
 .section-head h2 { margin: 5px 0 0; font-size: 30px; letter-spacing: -.045em; }
 .muted { color: #6b7280; font-size: 13px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.admin-links { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:18px; }
 .card { background: white; border: 1px solid #e5e7eb; border-radius: 18px; padding: 22px; min-height: 245px; display: flex; flex-direction: column; transition:transform .15s ease, box-shadow .15s ease; }
 .briefing-card:hover { transform:translateY(-2px); box-shadow:0 14px 35px rgba(15,23,42,.08); }
 .card .tag { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; font-weight: 800; color: #6b7280; }
@@ -40,16 +42,39 @@ h1 em { font-style: normal; color: #d1d5db; }
 .card h3 a:hover { text-decoration:underline; text-underline-offset:3px; }
 .card p { color: #4b5563; line-height: 1.58; margin: 0; font-size: 14px; }
 .card footer { margin-top: auto; padding-top: 22px; display: flex; justify-content: space-between; color: #6b7280; font-size: 11px; text-transform:uppercase; letter-spacing:.06em; }
+.button-link { display:inline-block; background:#111827; color:white; padding:11px 15px; border-radius:10px; font-weight:700; margin-top:auto; width:max-content; }
 .empty-state { background:white; border:1px dashed #d1d5db; border-radius:20px; padding:60px 28px; text-align:center; }
 .empty-mark { width:52px; height:52px; border-radius:50%; display:grid; place-items:center; margin:0 auto 18px; background:#111827; color:white; font-weight:900; }
 .empty-state h3 { margin:0 0 10px; font-size:22px; }
 .empty-state p { max-width:570px; margin:0 auto 22px; color:#6b7280; line-height:1.6; }
+.table-card { background:white; border:1px solid #e5e7eb; border-radius:18px; overflow:hidden; }
+.story-table-head, .story-row { display:grid; grid-template-columns:minmax(0,2fr) 150px 110px; gap:18px; align-items:center; padding:17px 20px; }
+.story-table-head { background:#f9fafb; color:#6b7280; text-transform:uppercase; letter-spacing:.1em; font-size:10px; font-weight:800; }
+.story-row { border-top:1px solid #eef0f3; font-size:13px; }
+.story-row strong { display:block; font-size:14px; line-height:1.35; }
+.story-row small { display:block; color:#9ca3af; margin-top:5px; }
+.status { display:inline-block; width:max-content; padding:5px 8px; border-radius:999px; background:#f3f4f6; color:#4b5563; font-size:10px; font-weight:800; text-transform:uppercase; }
+.status-published { background:#ecfdf5; color:#047857; }
+.status-rejected, .status-failed { background:#fef2f2; color:#b91c1c; }
+.story-row > a { color:#4b5563; font-weight:700; }
+.article-shell { max-width:820px; margin:0 auto; padding:72px 24px 100px; }
+.article-meta { display:flex; gap:14px; align-items:center; color:#6b7280; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+.article-shell h1 { max-width:none; font-size:clamp(42px,6vw,68px); color:#111827; margin:20px 0; }
+.article-dek { color:#4b5563; font-size:21px; line-height:1.55; }
+.article-lead { border-left:3px solid #111827; padding:4px 0 4px 20px; margin:42px 0; }
+.article-lead strong, .article-note span { font-size:10px; letter-spacing:.14em; }
+.article-lead p { font-size:20px; line-height:1.6; margin:10px 0 0; }
+.article-body { font-size:17px; line-height:1.8; color:#303641; }
+.article-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:42px; }
+.article-note { border:1px solid #e5e7eb; background:white; border-radius:16px; padding:20px; }
+.article-note span { color:#6b7280; font-weight:800; }
+.article-note p { line-height:1.6; color:#4b5563; }
+.article-footer { display:flex; justify-content:space-between; gap:18px; border-top:1px solid #e5e7eb; margin-top:45px; padding-top:20px; color:#6b7280; font-size:12px; }
 .auth-shell { min-height:100vh; display:grid; place-items:center; padding:24px; background:#0b0d11; }
 .auth-card { width:min(460px,100%); background:white; border-radius:22px; padding:32px; display:grid; gap:16px; box-shadow:0 20px 60px rgba(0,0,0,.2); }
 .auth-card h1 { font-size:42px; max-width:none; margin:0; }
 .auth-links { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:13px; }
 .auth-error { padding:12px; border-radius:10px; background:#fef2f2; color:#b91c1c; font-size:13px; }
 .auth-success { padding:12px; border-radius:10px; background:#ecfdf5; color:#047857; font-size:13px; }
-.button-link { display:inline-block; background:#111827; color:white; padding:11px 15px; border-radius:10px; font-weight:700; }
-@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } .nav { display: none; } .hero { padding-top: 58px; } .search { max-width:none; } }
-@media (max-width: 520px) { .search { flex-direction:column; } .search button { width:100%; } .header-inner { padding:15px 18px; } .content { padding-left:18px; padding-right:18px; } .hero { padding-left:18px; padding-right:18px; } }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } .admin-links, .article-grid { grid-template-columns:1fr; } .nav { display: none; } .hero { padding-top: 58px; } .search { max-width:none; } .story-table-head { display:none; } .story-row { grid-template-columns:1fr; gap:7px; } }
+@media (max-width: 520px) { .search { flex-direction:column; } .search button { width:100%; } .header-inner { padding:15px 18px; } .content { padding-left:18px; padding-right:18px; } .hero { padding-left:18px; padding-right:18px; } .article-shell { padding-left:18px; padding-right:18px; } }
