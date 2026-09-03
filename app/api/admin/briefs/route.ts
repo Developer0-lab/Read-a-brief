@@ -17,10 +17,24 @@ export async function POST(request: Request) {
   if (!user || !role) return Response.json({ error: 'Forbidden' }, { status: 403 })
   try {
     const body = await request.json()
-    const storyId = String(body.storyId || '')
+    const storyId = typeof body.storyId === 'string' ? body.storyId.trim() : ''
     if (!storyId) return Response.json({ error: 'storyId is required' }, { status: 400 })
-    const { data: story, error: storyError } = await supabase.from('stories').select('*').eq('id', storyId).single()
-    if (storyError || !story) return Response.json({ error: storyError?.message || 'Story not found' }, { status: 404 })
+
+    const { data: story, error: storyError } = await supabase
+      .from('stories')
+      .select('id,source_id,title,description,category,country,language,canonical_url,status')
+      .eq('id', storyId)
+      .single()
+    if (storyError || !story) return Response.json({ error: 'Story not found' }, { status: 404 })
+    if (story.status !== 'approved') return Response.json({ error: 'Only approved stories can become briefings.' }, { status: 409 })
+
+    const { data: existingSource } = await supabase
+      .from('brief_sources')
+      .select('brief_id')
+      .eq('story_id', story.id)
+      .maybeSingle()
+    if (existingSource?.brief_id) return Response.json({ ok: true, id: existingSource.brief_id, existing: true })
+
     const { data: source } = await supabase.from('sources').select('name').eq('id', story.source_id).maybeSingle()
     const { data: brief, error } = await supabase.from('briefs').insert({
       headline: story.title,
@@ -33,7 +47,8 @@ export async function POST(request: Request) {
       status: 'review',
       created_by: user.id,
     }).select('id').single()
-    if (error || !brief) return Response.json({ error: error?.message || 'Could not create brief' }, { status: 500 })
+    if (error || !brief) return Response.json({ error: 'Could not create brief.' }, { status: 500 })
+
     const { error: sourceError } = await supabase.from('brief_sources').insert({
       brief_id: brief.id,
       story_id: story.id,
@@ -43,9 +58,9 @@ export async function POST(request: Request) {
     })
     if (sourceError) {
       await supabase.from('briefs').delete().eq('id', brief.id)
-      return Response.json({ error: sourceError.message }, { status: 500 })
+      return Response.json({ error: 'Could not attach source attribution.' }, { status: 500 })
     }
-    await supabase.from('stories').update({ status: 'approved' }).eq('id', story.id)
+
     return Response.json({ ok: true, id: brief.id })
   } catch {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
