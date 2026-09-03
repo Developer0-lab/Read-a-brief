@@ -1,10 +1,5 @@
 {
-  "outputDirectory": ".next",
-  "alias": [
-    "read-a-brief.vercel.app",
-    "read-a-brief-muddualdrine0-4301s-projects.vercel.app",
-    "read-a-brief-git-main-muddualdrine0-4301s-projects.vercel.app"
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
       "path": "/api/automation/ingest",
