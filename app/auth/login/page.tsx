@@ -15,7 +15,10 @@ export default function LoginPage() {
     event.preventDefault(); setBusy(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError(error.message)
-    else window.location.href = new URLSearchParams(window.location.search).get('next') || '/admin'
+    else {
+      await fetch('/api/auth/claim-admin', { method: 'POST' })
+      window.location.href = new URLSearchParams(window.location.search).get('next') || '/admin'
+    }
     setBusy(false)
   }
 
