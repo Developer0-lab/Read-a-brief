@@ -15,19 +15,16 @@ export default function LoginPage() {
     event.preventDefault(); setBusy(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError(error.message)
-    else {
-      await fetch('/api/auth/claim-admin', { method: 'POST' })
-      window.location.href = new URLSearchParams(window.location.search).get('next') || '/admin'
-    }
+    else window.location.href = new URLSearchParams(window.location.search).get('next') || '/admin'
     setBusy(false)
   }
 
   return <main className="auth-shell"><form className="auth-card" onSubmit={submit}>
-    <Link href="/" className="muted">← Read-a-Brief</Link><div className="eyebrow">OPERATIONS ACCESS</div><h1>Sign in</h1><p className="muted">Access the briefing operations center.</p>
+    <Link href="/" className="muted">← Read-a-Brief</Link><div className="eyebrow">SUPER ADMIN ACCESS</div><h1>Sign in</h1><p className="muted">Sign in with the designated Super Admin account to access the operations center.</p>
     <label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" /></label>
     <label>Password<input type="password" required value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" /></label>
     {error && <div className="auth-error">{error}</div>}
     <button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-    <div className="auth-links"><Link href="/auth/forgot-password">Forgot password?</Link><Link href="/auth/signup">Create account</Link></div>
+    <div className="auth-links"><Link href="/auth/forgot-password">Forgot password?</Link></div>
   </form></main>
 }
