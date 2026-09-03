@@ -1,0 +1,9 @@
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+
+export const dynamic='force-dynamic'
+
+export default async function BriefsPage(){
+ const supabase=await createClient(); const{data:briefs,error}=await supabase.from('briefs').select('id,headline,category,country,status,published_at,created_at').order('created_at',{ascending:false}).limit(100)
+ return <main className="site"><header className="header"><div className="header-inner"><Link className="brand" href="/admin">READ-A-BRIEF <span>/ BRIEFS</span></Link><nav className="nav"><Link href="/admin">Dashboard</Link><Link href="/admin/inbox">Inbox</Link><Link href="/admin/automation">Automation</Link><Link href="/">Public site</Link></nav></div></header><div className="content admin-content"><div className="section-head"><div><div className="eyebrow">Publishing</div><h2>Briefings</h2></div><span className="muted">{briefs?.length??0} recent</span></div>{error?<section className="empty-state"><h3>Could not load briefs</h3><p>{error.message}</p></section>:briefs?.length?<section className="table-card"><div className="story-table-head"><span>Brief</span><span>Status</span><span>Published</span></div>{briefs.map(b=><div className="story-row" key={b.id}><div><Link href={`/admin/briefs/${b.id}`}><strong>{b.headline}</strong></Link><small>{b.category||b.country||'Uncategorized'} · {new Date(b.created_at).toLocaleString()}</small></div><span className={`status status-${b.status}`}>{b.status}</span><span>{b.published_at?new Date(b.published_at).toLocaleDateString():'—'}</span></div>)}</section>:<section className="empty-state"><h3>No briefings yet.</h3><p>Approve a story in the Story Inbox, then create its briefing.</p><Link className="button-link" href="/admin/inbox">Open Story Inbox →</Link></section>}</div></main>
+}
