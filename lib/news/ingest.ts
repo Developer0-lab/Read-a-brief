@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import dns from "node:dns/promises";
+import { isIP } from "node:net";
 import type { DiscoveredStory, FeedSource } from "./types";
 
 function text(value: string | null | undefined): string | null {
@@ -26,11 +27,18 @@ function link(item: string): string | null {
   return href ? text(href) : null;
 }
 
+function isPrivateAddress(address: string): boolean {
+  const lower = address.toLowerCase();
+  if (isIP(lower) === 4) return lower === '0.0.0.0' || lower === '127.0.0.1' || lower === '169.254.169.254' || /^10\./.test(lower) || /^192\.168\./.test(lower) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(lower);
+  if (isIP(lower) === 6) return lower === '::' || lower === '::1' || lower.startsWith('fc') || lower.startsWith('fd') || /^(fe[89ab])/i.test(lower) || lower.startsWith('::ffff:127.') || lower.startsWith('::ffff:10.') || lower.startsWith('::ffff:192.168.') || lower.startsWith('::ffff:172.');
+  return false;
+}
+
 function publicUrl(value: string, label: string): string {
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`${label} must use HTTP or HTTPS`);
   const host = url.hostname.toLowerCase();
-  if (host === 'localhost' || host === 'localhost.localdomain' || host === 'ip6-localhost' || host === '0.0.0.0' || host === '::1' || host === '169.254.169.254' || /^10\./.test(host) || /^127\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) || /^fc[0-9a-f]{2}:/i.test(host) || /^fd[0-9a-f]{2}:/i.test(host) || /^fe[89ab][0-9a-f]:/i.test(host)) throw new Error(`${label} points to a private network`);
+  if (host === 'localhost' || host === 'localhost.localdomain' || host === 'ip6-localhost' || isPrivateAddress(host)) throw new Error(`${label} points to a private network`);
   return url.toString();
 }
 
@@ -38,8 +46,7 @@ async function safeFeedUrl(value: string): Promise<string> {
   const normalized = publicUrl(value, 'Feed URL');
   const hostname = new URL(normalized).hostname;
   const addresses = await dns.lookup(hostname, { all: true, verbatim: true });
-  if (!addresses.length) throw new Error('Feed hostname could not be resolved');
-  for (const address of addresses) publicUrl(`http://${address.address}`, 'Feed URL');
+  if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address))) throw new Error('Feed hostname resolves to a private network');
   return normalized;
 }
 
