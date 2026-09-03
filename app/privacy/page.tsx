@@ -1,0 +1,6 @@
+import Link from 'next/link'
+import PublicFooter from '@/app/components/public-footer'
+
+export default function PrivacyPage() {
+  return <main className="site"><header className="simple-page-header"><Link className="brand" href="/">READ-A-BRIEF</Link></header><article className="info-page"><div className="eyebrow">PRIVACY</div><h1>Privacy Policy</h1><p className="info-lead">Read-a-Brief is designed to collect only the information needed to operate the service, protect accounts and improve the product.</p><h2>Information we collect</h2><p>Account information such as your email address is used for authentication and account management. Operational data may include source configurations, editorial actions and system logs needed to keep the platform reliable and secure.</p><h2>How we use information</h2><p>We use information to provide the service, authenticate users, operate the news pipeline, prevent abuse, troubleshoot problems and improve reliability.</p><h2>Third-party sources</h2><p>Briefings may link to external news sources. Their websites have their own privacy practices and policies.</p><h2>Questions</h2><p>If you have a privacy question, please contact us through the Contact page.</p></article><PublicFooter /></main>
+}
