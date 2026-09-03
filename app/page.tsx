@@ -32,7 +32,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
             <a href="#latest">Latest</a>
             <a href="#categories">Categories</a>
             <Link href="/auth/login">Sign in</Link>
-            <Link href="/admin">Operations</Link>
+            <Link href="/auth/login?next=%2Fadmin" className="button-link">Super Admin</Link>
           </nav>
         </div>
       </header>
@@ -80,7 +80,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
             <div className="empty-mark">R</div>
             <h3>The briefing engine is coming online.</h3>
             <p>Once approved stories are published, they will appear here automatically. Operations can manage the source pipeline from the admin center.</p>
-            <Link className="button-link" href="/admin">Open Operations →</Link>
+            <Link className="button-link" href="/auth/login?next=%2Fadmin">Open Super Admin →</Link>
           </section>
         )}
       </div>
