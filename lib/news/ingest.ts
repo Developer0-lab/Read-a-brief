@@ -50,6 +50,29 @@ async function safeFeedUrl(value: string): Promise<string> {
   return normalized;
 }
 
+function apiItems(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) return payload.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+  if (!payload || typeof payload !== 'object') return [];
+  const object = payload as Record<string, unknown>;
+  for (const key of ['items', 'articles', 'stories', 'results', 'data']) if (Array.isArray(object[key])) return object[key].filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+  return [];
+}
+
+function normalizeApi(payload: unknown, source: FeedSource): DiscoveredStory[] {
+  return apiItems(payload).map((item, index) => {
+    const title = text(String(item.title ?? item.headline ?? '')) ?? 'Untitled story';
+    const rawUrl = String(item.url ?? item.link ?? item.canonical_url ?? `${source.feedUrl}#item-${index}`);
+    let canonicalUrl = source.feedUrl;
+    try { canonicalUrl = publicUrl(rawUrl, 'Story URL'); } catch {}
+    const description = text(String(item.description ?? item.summary ?? item.dek ?? ''));
+    const publishedAt = item.published_at ?? item.publishedAt ?? item.published ?? item.pubDate ?? item.updated;
+    const author = text(String(item.author ?? item.byline ?? ''));
+    const externalId = text(String(item.id ?? item.guid ?? item.external_id ?? canonicalUrl)) ?? canonicalUrl;
+    const contentHash = createHash("sha256").update(`${title}\n${description ?? ""}\n${canonicalUrl}`).digest("hex");
+    return { sourceId: source.id, externalId, canonicalUrl, title, description, author, publishedAt: publishedAt ? String(publishedAt) : null, contentHash, category: source.category, country: source.country, metadata: { sourceType: source.sourceType } };
+  }).filter((story) => story.title !== "Untitled story" || story.canonicalUrl);
+}
+
 export function normalizeFeed(xml: string, source: FeedSource): DiscoveredStory[] {
   return items(xml).map((item, index) => {
     const rawUrl = link(item) ?? `${source.feedUrl}#item-${index}`;
@@ -67,7 +90,7 @@ export function normalizeFeed(xml: string, source: FeedSource): DiscoveredStory[
 export async function fetchFeed(source: FeedSource): Promise<DiscoveredStory[]> {
   let url = await safeFeedUrl(source.feedUrl);
   for (let redirects = 0; redirects < 4; redirects++) {
-    const response = await fetch(url, { headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9" }, cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(20_000) });
+    const response = await fetch(url, { headers: { accept: source.sourceType === 'api' ? 'application/json, text/json;q=0.9' : 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9' }, cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(20_000) });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');
       if (!location) throw new Error(`Feed returned HTTP ${response.status}`);
@@ -77,6 +100,11 @@ export async function fetchFeed(source: FeedSource): Promise<DiscoveredStory[]> 
     if (!response.ok) throw new Error(`Feed returned HTTP ${response.status}`);
     const length = Number(response.headers.get('content-length') || 0);
     if (length > 2_000_000) throw new Error('Feed response is too large');
+    if (source.sourceType === 'api') {
+      let payload: unknown;
+      try { payload = await response.json(); } catch { throw new Error('API source did not return valid JSON'); }
+      return normalizeApi(payload, { ...source, feedUrl: url });
+    }
     const xml = await response.text();
     return normalizeFeed(xml, { ...source, feedUrl: url });
   }
