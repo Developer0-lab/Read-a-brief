@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type Story = {
@@ -22,8 +22,7 @@ type Story = {
 
 export default function StoryReviewPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [story, setStory] = useState<Story | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
