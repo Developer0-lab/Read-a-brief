@@ -36,10 +36,12 @@ export async function POST(request: Request) {
     if (existingSource?.brief_id) return Response.json({ ok: true, id: existingSource.brief_id, existing: true })
 
     const { data: source } = await supabase.from('sources').select('name').eq('id', story.source_id).maybeSingle()
+    const sourceDescription = story.description?.trim() || null
     const { data: brief, error } = await supabase.from('briefs').insert({
       headline: story.title,
-      dek: story.description,
-      summary: story.description,
+      dek: sourceDescription,
+      summary: sourceDescription || story.title,
+      body: sourceDescription,
       category: story.category,
       country: story.country,
       language: story.language || 'English',
