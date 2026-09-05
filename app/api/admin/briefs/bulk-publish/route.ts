@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const briefIds = Array.isArray(body.briefIds) ? [...new Set(body.briefIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim()).map((id: string) => id.trim()))] : []
+    const briefIds = Array.isArray(body.briefIds) ? [...new Set(body.briefIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0).map((id: string) => id.trim()))] : []
     if (!briefIds.length || briefIds.length > 100) return Response.json({ error: 'Select between 1 and 100 briefings.' }, { status: 400 })
 
     const { data: briefs, error } = await supabase.from('briefs').select('id,status,headline,summary').in('id', briefIds)
