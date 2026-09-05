@@ -22,17 +22,13 @@ export async function POST(request: Request) {
 
     const { data: story, error: storyError } = await supabase
       .from('stories')
-      .select('id,source_id,title,description,category,country,language,canonical_url,status')
+      .select('id,source_id,title,description,category,country,language,canonical_url,status,image_url')
       .eq('id', storyId)
       .single()
     if (storyError || !story) return Response.json({ error: 'Story not found' }, { status: 404 })
     if (story.status !== 'approved') return Response.json({ error: 'Only approved stories can become briefings.' }, { status: 409 })
 
-    const { data: existingSource } = await supabase
-      .from('brief_sources')
-      .select('brief_id')
-      .eq('story_id', story.id)
-      .maybeSingle()
+    const { data: existingSource } = await supabase.from('brief_sources').select('brief_id').eq('story_id', story.id).maybeSingle()
     if (existingSource?.brief_id) return Response.json({ ok: true, id: existingSource.brief_id, existing: true })
 
     const { data: source } = await supabase.from('sources').select('name').eq('id', story.source_id).maybeSingle()
@@ -44,7 +40,8 @@ export async function POST(request: Request) {
       body: sourceDescription,
       category: story.category,
       country: story.country,
-      language: story.language || 'English',
+      language: story.language || 'en',
+      image_url: story.image_url,
       source_count: 1,
       status: 'review',
       created_by: user.id,
