@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const storyIds = Array.isArray(body.storyIds) ? [...new Set(body.storyIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim()).map((id: string) => id.trim()))] : []
+    const storyIds = Array.isArray(body.storyIds) ? [...new Set(body.storyIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0).map((id: string) => id.trim()))] : []
     if (!storyIds.length || storyIds.length > 100) return Response.json({ error: 'Select between 1 and 100 stories.' }, { status: 400 })
 
     const { data: stories, error } = await supabase.from('stories')
