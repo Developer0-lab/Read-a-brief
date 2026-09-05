@@ -3,25 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 import PublicFooter from '@/app/components/public-footer'
 
 export const dynamic = 'force-dynamic'
-
 const categories = ['Top Stories', 'Uganda', 'Africa', 'World', 'Technology', 'AI', 'Business', 'Science', 'Sports']
+type BriefCard = { id:string; headline:string; dek:string|null; summary:string|null; category:string|null; country:string|null; image_url:string|null; published_at:string|null; created_at:string }
 
 export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string; q?: string }> }) {
-  const params = await searchParams
-  const category = params?.category
-  const query = params?.q?.trim()
-  const supabase = await createClient()
-  let request = supabase.from('briefs').select('id, headline, dek, summary, category, country, published_at, created_at').eq('status', 'published').order('published_at', { ascending: false }).limit(24)
-  if (category && category !== 'Top Stories') request = request.eq('category', category)
-  if (query) request = request.or(`headline.ilike.%${query}%,summary.ilike.%${query}%`)
-  const { data: briefs } = await request
-
-  return <main className="site">
-    <header className="header"><div className="header-inner"><Link className="brand" href="/">READ-A-BRIEF <span>/ NEWS INTELLIGENCE</span></Link><nav className="nav"><a href="#latest">Latest</a><a href="#categories">Categories</a><Link href="/auth/login">Sign in</Link></nav></div></header>
-    <section className="hero"><div className="hero-inner"><div className="eyebrow">THE WORLD. IN A FEW MINUTES.</div><h1>Know what happened.<br /><em>Understand why it matters.</em></h1><p>Original, source-attributed briefings that turn the day&apos;s important developments into clear context you can actually use.</p><form className="search" action="/" method="get"><input name="q" defaultValue={query} placeholder="Search today&apos;s briefings…" aria-label="Search briefings" /><button type="submit">Search</button></form></div></section>
-    <div className="content"><div id="categories" className="toolbar">{categories.map((item) => <Link className={`chip ${(!category && item === 'Top Stories') || category === item ? 'active' : ''}`} href={item === 'Top Stories' ? '/' : `/?category=${encodeURIComponent(item)}`} key={item}>{item}</Link>)}</div>
-      <div id="latest" className="section-head"><div><div className="eyebrow">{query ? `SEARCH RESULTS FOR “${query}”` : category || 'LATEST'}</div><h2>{briefs?.length ? 'Today’s briefings' : 'No published briefings yet'}</h2></div><span className="muted">Updated automatically</span></div>
-      {briefs && briefs.length > 0 ? <section className="grid">{briefs.map((brief) => <article className="card briefing-card" key={brief.id}><div className="tag">{brief.category || brief.country || 'News'}</div><h3><Link href={`/brief/${brief.id}`}>{brief.headline}</Link></h3><p>{brief.dek || brief.summary || 'A concise Read-a-Brief briefing.'}</p><footer><span>{brief.country || 'Global'}</span><span>{brief.published_at ? new Date(brief.published_at).toLocaleDateString() : 'New'}</span></footer></article>)}</section> : <section className="empty-state"><div className="empty-mark">R</div><h3>The briefing engine is coming online.</h3><p>Once approved stories are published, they will appear here automatically. Operations can manage the source pipeline from the admin center.</p></section>}
-    </div><PublicFooter />
-  </main>
+  const params=await searchParams; const category=params?.category; const query=params?.q?.trim(); const supabase=await createClient()
+  let request=supabase.from('briefs').select('id,headline,dek,summary,category,country,image_url,published_at,created_at').eq('status','published').order('published_at',{ascending:false}).limit(24)
+  if(category&&category!=='Top Stories') request=request.eq('category',category); if(query) request=request.or(`headline.ilike.%${query}%,summary.ilike.%${query}%`)
+  const {data}=await request; const cards=(data||[]) as BriefCard[]; const featured=cards[0]; const rest=cards.slice(1)
+  return <main className="site"><header className="header"><div className="header-inner"><Link className="brand" href="/">READ-A-BRIEF <span>/ NEWS INTELLIGENCE</span></Link><nav className="nav"><a href="#latest">Latest</a><a href="#categories">Categories</a><Link href="/auth/login">Sign in</Link></nav></div></header>
+    <section className="hero"><div className="hero-inner"><div className="eyebrow">THE WORLD. IN A FEW MINUTES.</div><h1>Know what happened.<br/><em>Understand why it matters.</em></h1><p>Original, source-attributed briefings that turn the day&apos;s important developments into clear context you can actually use.</p><form className="search" action="/" method="get"><input name="q" defaultValue={query} placeholder="Search today&apos;s briefings…" aria-label="Search briefings"/><button type="submit">Search</button></form></div></section>
+    <div className="content"><div id="categories" className="toolbar">{categories.map(item=><Link className={`chip ${(!category&&item==='Top Stories')||category===item?'active':''}`} href={item==='Top Stories'?'/':`/?category=${encodeURIComponent(item)}`} key={item}>{item}</Link>)}</div>
+      <div id="latest" className="section-head"><div><div className="eyebrow">{query?`SEARCH RESULTS FOR “${query}”`:category||'LATEST'}</div><h2>{cards.length?'Today’s briefings':'No published briefings yet'}</h2></div><span className="muted">Updated automatically</span></div>
+      {featured?<section className="news-layout"><article className="featured-card"><Link href={`/brief/${featured.id}`} className="image-frame featured-image">{featured.image_url?<img src={featured.image_url} alt=""/>:<div className="image-placeholder"><span>{featured.category||'NEWS'}</span></div>}</Link><div className="featured-copy"><div className="tag">{featured.category||featured.country||'News'}</div><h3><Link href={`/brief/${featured.id}`}>{featured.headline}</Link></h3><p>{featured.dek||featured.summary||'A concise Read-a-Brief briefing.'}</p><footer><span>{featured.country||'Global'}</span><span>{featured.published_at?new Date(featured.published_at).toLocaleDateString():'New'}</span></footer></div></article><div className="news-grid">{rest.map(brief=><article className="card briefing-card" key={brief.id}><Link href={`/brief/${brief.id}`} className="image-frame card-image">{brief.image_url?<img src={brief.image_url} alt=""/>:<div className="image-placeholder"><span>{brief.category||'NEWS'}</span></div>}</Link><div className="tag">{brief.category||brief.country||'News'}</div><h3><Link href={`/brief/${brief.id}`}>{brief.headline}</Link></h3><p>{brief.dek||brief.summary||'A concise Read-a-Brief briefing.'}</p><footer><span>{brief.country||'Global'}</span><span>{brief.published_at?new Date(brief.published_at).toLocaleDateString():'New'}</span></footer></article>)}</div></section>:<section className="empty-state"><div className="empty-mark">R</div><h3>The briefing engine is coming online.</h3><p>Once approved stories are published, they will appear here automatically. Operations can manage the source pipeline from the admin center.</p></section>}
+    </div><PublicFooter/></main>
 }
