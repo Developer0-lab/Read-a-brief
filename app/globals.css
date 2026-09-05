@@ -115,6 +115,15 @@ h1 em { font-style: normal; color: #d1d5db; }
 .auth-links { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:13px; }
 .auth-error { padding:12px; border-radius:10px; background:#fef2f2; color:#b91c1c; font-size:13px; }
 .auth-success { padding:12px; border-radius:10px; background:#ecfdf5; color:#047857; font-size:13px; }
+.bulk-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px; background:#f9fafb; border-bottom:1px solid #eef0f3; }
+.bulk-select { display:flex; align-items:center; gap:8px; font-weight:800; color:#374151; }
+.bulk-select input, .story-check input { width:17px; height:17px; accent-color:#111827; }
+.bulk-count { color:#6b7280; font-size:13px; margin-right:auto; }
+.bulk-message { padding:0 18px; margin:12px 0; }
+.button-secondary { background:#fff; color:#374151; border:1px solid #d1d5db; }
+.story-row { grid-template-columns:34px minmax(0,2fr) 150px 110px; }
+.story-check { display:flex; align-items:center; justify-content:center; }
+.story-row.is-selected { background:#f8fafc; }
 @media (max-width: 900px) { .news-layout { grid-template-columns:1fr; } }
-@media (max-width: 800px) { .grid, .news-grid { grid-template-columns:1fr; } .admin-links, .article-grid { grid-template-columns:1fr; } .nav { display: none; } .hero { padding-top: 58px; } .search { max-width:none; } .story-table-head { display:none; } .story-row { grid-template-columns:1fr; gap:7px; } .public-footer-inner { flex-direction:column; } }
+@media (max-width: 800px) { .grid, .news-grid { grid-template-columns:1fr; } .admin-links, .article-grid { grid-template-columns:1fr; } .nav { display: none; } .hero { padding-top: 58px; } .search { max-width:none; } .story-table-head { display:none; } .story-row { grid-template-columns:34px 1fr; gap:7px; } .story-row > .status, .story-row > a { margin-left:41px; } .public-footer-inner { flex-direction:column; } }
 @media (max-width: 520px) { .search { flex-direction:column; } .search button { width:100%; } .header-inner { padding:15px 18px; } .content { padding-left:18px; padding-right:18px; } .hero { padding-left:18px; padding-right:18px; } .article-shell, .info-page { padding-left:18px; padding-right:18px; } .simple-page-header { padding-left:18px; padding-right:18px; } .public-footer { padding-left:18px; padding-right:18px; } .article-hero-image, .article-hero-placeholder { border-radius:14px; } }
