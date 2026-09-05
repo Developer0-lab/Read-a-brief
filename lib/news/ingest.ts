@@ -27,6 +27,20 @@ function link(item: string): string | null {
   return href ? text(href) : null;
 }
 
+function image(item: string): string | null {
+  const candidates = [
+    item.match(/<media:content[^>]+url=["']([^"']+)["']/i)?.[1],
+    item.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i)?.[1],
+    item.match(/<enclosure[^>]+type=["']image\/[^"']+["'][^>]+url=["']([^"']+)["']/i)?.[1],
+    item.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image\/[^"']+["']/i)?.[1],
+    item.match(/<image[^>]*>\s*<url>([\s\S]*?)<\/url>/i)?.[1],
+    item.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
+  ];
+  const candidate = candidates.find(Boolean);
+  if (!candidate) return null;
+  try { return publicUrl(candidate.trim(), 'Image URL'); } catch { return null; }
+}
+
 function isPrivateAddress(address: string): boolean {
   const lower = address.toLowerCase();
   if (isIP(lower) === 4) return lower === '0.0.0.0' || lower === '127.0.0.1' || lower === '169.254.169.254' || /^10\./.test(lower) || /^192\.168\./.test(lower) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(lower);
@@ -67,9 +81,12 @@ function normalizeApi(payload: unknown, source: FeedSource): DiscoveredStory[] {
     const description = text(String(item.description ?? item.summary ?? item.dek ?? ''));
     const publishedAt = item.published_at ?? item.publishedAt ?? item.published ?? item.pubDate ?? item.updated;
     const author = text(String(item.author ?? item.byline ?? ''));
+    const rawImage = item.image_url ?? item.imageUrl ?? item.image ?? item.thumbnail ?? item.thumbnail_url ?? item.urlToImage;
+    let imageUrl: string | null = null;
+    if (rawImage) { try { imageUrl = publicUrl(String(rawImage), 'Image URL'); } catch {} }
     const externalId = text(String(item.id ?? item.guid ?? item.external_id ?? canonicalUrl)) ?? canonicalUrl;
     const contentHash = createHash("sha256").update(`${title}\n${description ?? ""}\n${canonicalUrl}`).digest("hex");
-    return { sourceId: source.id, externalId, canonicalUrl, title, description, author, publishedAt: publishedAt ? String(publishedAt) : null, contentHash, category: source.category, country: source.country, metadata: { sourceType: source.sourceType } };
+    return { sourceId: source.id, externalId, canonicalUrl, title, description, author, publishedAt: publishedAt ? String(publishedAt) : null, contentHash, category: source.category, country: source.country, imageUrl, metadata: { sourceType: source.sourceType } };
   }).filter((story) => story.title !== "Untitled story" || story.canonicalUrl);
 }
 
@@ -83,7 +100,7 @@ export function normalizeFeed(xml: string, source: FeedSource): DiscoveredStory[
     const description = tag(item, "description") ?? tag(item, "summary") ?? tag(item, "content");
     const externalId = tag(item, "guid") ?? tag(item, "id") ?? canonicalUrl;
     const contentHash = createHash("sha256").update(`${title}\n${description ?? ""}\n${canonicalUrl}`).digest("hex");
-    return { sourceId: source.id, externalId, canonicalUrl, title, description, publishedAt, contentHash, category: source.category, country: source.country, metadata: { sourceType: source.sourceType } };
+    return { sourceId: source.id, externalId, canonicalUrl, title, description, publishedAt, contentHash, category: source.category, country: source.country, imageUrl: image(item), metadata: { sourceType: source.sourceType } };
   }).filter((story) => story.title !== "Untitled story" || story.canonicalUrl);
 }
 
