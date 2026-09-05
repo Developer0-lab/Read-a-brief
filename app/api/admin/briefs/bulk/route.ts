@@ -8,8 +8,8 @@ async function manager() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, role: null }
   const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
-  const role = Boolean(profile?.is_active && (profile.role === 'admin' || profile.role === 'editor')) ? profile.role : null
-  return { supabase, user, role }
+  if (!profile || !profile.is_active || (profile.role !== 'admin' && profile.role !== 'editor')) return { supabase, user, role: null }
+  return { supabase, user, role: profile.role }
 }
 
 export async function POST(request: Request) {
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     const errors: string[] = []
 
     for (const story of stories ?? []) {
+      if (story.status === 'rejected') { errors.push(story.title); continue }
       if (story.status !== 'approved') {
         const { error: approveError } = await supabase.from('stories').update({ status: 'approved' }).eq('id', story.id)
         if (approveError) { errors.push(story.title); continue }
