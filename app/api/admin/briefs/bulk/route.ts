@@ -8,7 +8,7 @@ async function manager() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, role: null }
   const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
-  const role = profile?.is_active && (profile.role === 'admin' || profile.role === 'editor') ? profile.role : null
+  const role = Boolean(profile?.is_active && (profile.role === 'admin' || profile.role === 'editor')) ? profile.role : null
   return { supabase, user, role }
 }
 
@@ -28,7 +28,6 @@ export async function POST(request: Request) {
 
     let created = 0
     let existing = 0
-    let skipped = 0
     const errors: string[] = []
 
     for (const story of stories ?? []) {
@@ -72,7 +71,8 @@ export async function POST(request: Request) {
       created++
     }
 
-    skipped = storyIds.length - (created + existing + errors.length)
+    const processed = created + existing + errors.length
+    const skipped = Math.max(0, storyIds.length - processed)
     return Response.json({ ok: true, created, existing, skipped, errors })
   } catch {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
