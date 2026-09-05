@@ -23,6 +23,7 @@ export type DiscoveredStory = {
   language?: string | null
   category?: string | null
   country?: string | null
+  imageUrl?: string | null
   metadata?: Record<string, unknown>
 }
 
