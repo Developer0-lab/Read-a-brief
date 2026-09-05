@@ -3,12 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request) {
+async function manager() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  if (!user) return { supabase, user: null, role: null }
   const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
-  if (!Boolean(profile?.is_active && ['admin', 'editor'].includes(profile.role))) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  if (!profile || !profile.is_active || (profile.role !== 'admin' && profile.role !== 'editor')) return { supabase, user, role: null }
+  return { supabase, user, role: profile.role }
+}
+
+export async function POST(request: Request) {
+  const { supabase, user, role } = await manager()
+  if (!user || !role) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   try {
     const body = await request.json()
@@ -19,7 +25,7 @@ export async function POST(request: Request) {
     if (error) return Response.json({ error: 'Could not load selected briefings.' }, { status: 500 })
 
     const now = new Date().toISOString()
-    const publishable = (briefs ?? []).filter(b => ['review', 'approved'].includes(b.status) && b.headline?.trim() && b.summary?.trim())
+    const publishable = (briefs ?? []).filter(b => b.status === 'approved' && b.headline?.trim() && b.summary?.trim())
     const skipped = (briefs ?? []).filter(b => !publishable.some(p => p.id === b.id))
     if (publishable.length) {
       const { error: updateError } = await supabase.from('briefs').update({ status: 'published', published_at: now, reviewed_at: now }).in('id', publishable.map(b => b.id))
