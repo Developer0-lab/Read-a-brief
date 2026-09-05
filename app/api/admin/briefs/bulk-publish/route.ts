@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { data: profile } = await supabase.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle()
-  if (!profile?.is_active || !['admin', 'editor'].includes(profile.role)) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  if (!Boolean(profile?.is_active && ['admin', 'editor'].includes(profile.role))) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   try {
     const body = await request.json()
